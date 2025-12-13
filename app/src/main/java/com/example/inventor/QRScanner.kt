@@ -3,6 +3,7 @@ package com.example.inventor
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -48,8 +49,7 @@ fun QRScannerScreen(navController: NavController) {
             val equipmentName = scanResult.contents
             scannedResult = equipmentName
             Toast.makeText(context, "Scanned: $equipmentName", Toast.LENGTH_LONG).show()
-
-            navController.navigate("modifyitem/$equipmentName")
+            navController.navigate("modifyitem/${Uri.encode(equipmentName)}")
         }
     }
 

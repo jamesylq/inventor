@@ -1,5 +1,6 @@
 package com.example.inventor
 
+import QRCodeData
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
@@ -90,7 +91,7 @@ fun ItemSearcher(
                         .padding(horizontal = 4.dp),
                     onClick = onClick?: {
                         val encodedName = Uri.encode(item.name)
-                        navController.navigate("modifyitem/$encodedName")
+                        navController.navigate("viewitem/$encodedName")
                     }
                 ) {
                     Column(
@@ -147,17 +148,4 @@ fun ItemSearcher(
             }
         }
     }
-}
-
-fun statusToText(status: Int): String {
-    return when (status) {
-        0 -> "Available"
-        1 -> "Checked Out"
-        else -> "Unknown"
-    }
-}
-
-fun formatTime(time: Long): String {
-    val sdf = java.text.SimpleDateFormat("MMM dd, yyyy h:mma", java.util.Locale.getDefault())
-    return sdf.format(java.util.Date(time))
 }

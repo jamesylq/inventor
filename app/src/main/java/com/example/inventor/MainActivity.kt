@@ -64,6 +64,15 @@ class MainActivity : ComponentActivity() {
                             ModifyItemScreen(navController, Uri.decode(name))
                         }
 
+                        composable("viewitem/{name}",
+                            arguments = listOf(navArgument("name") {
+                                type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val name = backStackEntry.arguments?.getString("name") ?: ""
+                            ViewItemScreen(navController, Uri.decode(name))
+                        }
+
                         composable("itemsearcher") { ItemSearcherScreen(navController) }
                     }
                 }

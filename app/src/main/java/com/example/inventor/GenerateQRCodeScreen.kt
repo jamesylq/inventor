@@ -82,32 +82,7 @@ fun GenerateQRScreen(navController: NavController) {
                 onClick = {
                     if (inputText.isNotBlank() && homeLocation.isNotBlank()) {
                         // Generate QR bitmap
-                        val writer = QRCodeWriter()
-                        val bitMatrix = writer.encode(
-                            inputText,
-                            BarcodeFormat.QR_CODE,
-                            512,
-                            512
-                        )
-
-                        val bmp = android.graphics.Bitmap.createBitmap(
-                            512,
-                            512,
-                            android.graphics.Bitmap.Config.RGB_565
-                        )
-
-                        for (x in 0 until 512) {
-                            for (y in 0 until 512) {
-                                bmp.setPixel(
-                                    x,
-                                    y,
-                                    if (bitMatrix[x, y]) android.graphics.Color.BLACK
-                                    else android.graphics.Color.WHITE
-                                )
-                            }
-                        }
-
-                        qrBitmap = bmp
+                        qrBitmap = generateQRBitmap(inputText)
 
                         // Save item to Firebase
                         saveNewItem(
@@ -133,44 +108,14 @@ fun GenerateQRScreen(navController: NavController) {
     // QR Code AlertDialog
     // =========================
     if (showQRDialog && qrBitmap != null) {
-        AlertDialog(
-            onDismissRequest = { showQRDialog = false },
-            containerColor = MaterialTheme.colorScheme.background, // match app background
-            title = {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Spacer(modifier = Modifier.weight(1.0f))
-                    IconButton(
-                        onClick = {
-                            showQRDialog = false
-                            navController.navigate("home") {
-                                popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                launchSingleTop = true
-                            }
-                        }
-                    ) {
-                        Icon(Icons.Default.Close, "Close")
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        saveBitmapToGallery(context, qrBitmap!!, "$inputText.png")
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Download")
-                }
-            },
-            text = {
-                Column(
-                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
-                ) {
-                    Image(
-                        bitmap = qrBitmap!!.asImageBitmap(),
-                        contentDescription = "Generated QR Code",
-                        modifier = Modifier.size(256.dp)
-                    )
+        QRCodeDialog(
+            bitmap = qrBitmap!!,
+            filename = "$inputText.png",
+            onDismiss = {
+                showQRDialog = false
+                navController.navigate("home") {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    launchSingleTop = true
                 }
             }
         )

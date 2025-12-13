@@ -18,9 +18,6 @@ import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
-val itemLocations = listOf("Hall", "Audi", "Media Room", "Hall Control Room", "Audi Control Room")
-
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ModifyItemScreen(
     navController: NavController,
@@ -28,18 +25,28 @@ fun ModifyItemScreen(
     prevDestination: String = "itemsearcher"
 ) {
     var location by remember { mutableStateOf("") }
+    var homeLocation by remember { mutableStateOf("") }
+
     var currentWith by remember { mutableStateOf("") }
+    var currentUser by remember { mutableStateOf("") }
     var remarks by remember { mutableStateOf("") }
     var status by remember { mutableIntStateOf(0) }
     var recompose by remember { mutableIntStateOf(0) }
     var loading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
     var showCloseDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     var currentWithConfirmation by remember { mutableStateOf(false) }
+
     var saveLocation by remember { mutableStateOf(false) }
     var selectedLocation by remember { mutableStateOf<String?>(null) }
     var otherText by remember { mutableStateOf("") }
-    var currentUser by remember { mutableStateOf("") }
+
+    var saveHomeLocation by remember { mutableStateOf(false) }
+    var selectedHomeLocation by remember { mutableStateOf<String?>(null) }
+    var otherHomeText by remember { mutableStateOf("") }
+
 
     BackHandler {
         navController.navigate(prevDestination) {
@@ -55,6 +62,7 @@ fun ModifyItemScreen(
             override fun onDataChange(snapshot: DataSnapshot) {
                 snapshot.getValue(QRCodeData::class.java)?.let { data ->
                     location = data.location
+                    homeLocation = data.homeLocation
                     currentWith = data.currentWith
                     remarks = data.remarks
                     status = data.status
@@ -115,6 +123,50 @@ fun ModifyItemScreen(
             }
         )
     }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Item?") },
+            text = {
+                Text(
+                    "This action cannot be undone.\n\n" +
+                            "Are you sure you want to permanently delete \"$itemName\"?"
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        database.reference.child("qrcodes").child(itemName)
+                            .removeValue()
+                            .addOnSuccessListener {
+                                navController.navigate(prevDestination) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
+                                }
+                            }
+                            .addOnFailureListener {
+                                errorMessage = "Failed to delete item: ${it.localizedMessage}"
+                            }
+                    }
+                ) {
+                    Text(
+                        "Delete",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+        )
+    }
+
 
     Scaffold (
         topBar = {
@@ -178,6 +230,44 @@ fun ModifyItemScreen(
                     onSaveClicked = { saveLocation = true }
                 )
 
+                EditableTextBox(
+                    label = "Home Location",
+                    textValue = homeLocation,
+                    onValueChange = { homeLocation = it },
+                    editingComponents = { setValue, onExit ->
+                        if (saveHomeLocation) {
+                            val sel = otherHomeText.ifBlank { selectedHomeLocation }
+                            if (sel != null) {
+                                homeLocation = sel
+                                setValue(sel)
+                            }
+                            onExit()
+                            saveHomeLocation = false
+                        }
+
+                        LocationPickerEditor(
+                            itemLocations = itemLocations,
+                            selectedLocation = selectedHomeLocation,
+                            onSelectedLocationChange = {
+                                selectedHomeLocation = it
+                                if (it != null) otherHomeText = ""
+                            },
+                            otherText = otherHomeText,
+                            onOtherTextChange = {
+                                otherHomeText = it
+                                if (it.isNotBlank()) selectedHomeLocation = null
+                            },
+                            onSaveRequested = { sel ->
+                                if (sel != null) {
+                                    homeLocation = sel
+                                    setValue(sel)
+                                }
+                                onExit()
+                            }
+                        )
+                    },
+                    onSaveClicked = { saveHomeLocation = true }
+                )
 
                 EditableTextBox(
                     label = "Current With",
@@ -339,9 +429,11 @@ fun ModifyItemScreen(
                     onClick = {
                         val updates = mapOf(
                             "location" to location,
+                            "homeLocation" to homeLocation,
                             "currentWith" to currentWith,
                             "remarks" to remarks,
-                            "updateTime" to System.currentTimeMillis()
+                            "updateTime" to System.currentTimeMillis(),
+                            "status" to if (location == homeLocation) 1 else 0
                         )
 
                         database.reference.child("qrcodes").child(itemName)
@@ -355,6 +447,19 @@ fun ModifyItemScreen(
                 ) {
                     Text("Save Changes")
                 }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                OutlinedButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete Item")
+                }
+
             }
         }
     }
