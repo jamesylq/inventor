@@ -2,7 +2,6 @@ package com.example.inventor
 
 import QRCodeData
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
 val itemLocations = listOf("Hall", "Audi", "Media Room", "Hall Control Room", "Audi Control Room")
@@ -39,6 +39,7 @@ fun ModifyItemScreen(
     var saveLocation by remember { mutableStateOf(false) }
     var selectedLocation by remember { mutableStateOf<String?>(null) }
     var otherText by remember { mutableStateOf("") }
+    var currentUser by remember { mutableStateOf("") }
 
     BackHandler {
         navController.navigate(prevDestination) {
@@ -71,6 +72,7 @@ fun ModifyItemScreen(
     val registeredUsers = remember { mutableStateOf(listOf<String>()) }
 
     LaunchedEffect(Unit) {
+        currentUser = FirebaseAuth.getInstance().currentUser?.displayName!!
         database.reference.child("users").addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 registeredUsers.value = snapshot.children.mapNotNull { it.key }
@@ -158,86 +160,24 @@ fun ModifyItemScreen(
                             saveLocation = false
                         }
 
-                        Column(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(0.dp)) {
-                            Text(
-                                text = "Location",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(bottom = 5.dp)
-                            )
-
-                            FlowRow(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                // Predefined locations
-                                itemLocations.forEach { location ->
-                                    val isSelected = selectedLocation == location
-
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier
-                                            .clickable {
-                                                selectedLocation = location
-                                                otherText = ""
-                                            }
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            RadioButton(
-                                                selected = isSelected,
-                                                onClick = {
-                                                    selectedLocation = location
-                                                    otherText = ""
-                                                },
-                                                modifier = Modifier.size(16.dp) // smaller radio button
-                                            )
-                                            Spacer(modifier = Modifier.width(10.dp))
-                                            Text(
-                                                text = location,
-                                                style = MaterialTheme.typography.labelLarge
-                                            )
-                                        }
-                                    }
+                        LocationPickerEditor(
+                            itemLocations = itemLocations,
+                            selectedLocation = selectedLocation,
+                            onSelectedLocationChange = { selectedLocation = it },
+                            otherText = otherText,
+                            onOtherTextChange = { otherText = it },
+                            onSaveRequested = { sel ->
+                                if (sel != null) {
+                                    location = sel
+                                    setValue(sel)
                                 }
-
-                                // "Others" option
-                                val isOtherSelected = otherText.isNotBlank()
-
-                                Box(
-                                    contentAlignment = Alignment.CenterStart,
-                                    modifier = Modifier
-                                        .clickable {
-                                            selectedLocation = null
-                                        }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        RadioButton(
-                                            selected = isOtherSelected,
-                                            onClick = { selectedLocation = null },
-                                            modifier = Modifier.size(16.dp) // smaller radio button
-                                        )
-                                        Spacer(modifier = Modifier.width(10.dp))
-                                        OutlinedTextField(
-                                            value = otherText,
-                                            onValueChange = { value ->
-                                                otherText = value
-                                                if (value.isNotBlank()) selectedLocation = null
-                                            },
-                                            label = { Text("Enter Other Location", style = MaterialTheme.typography.labelLarge) },
-                                            singleLine = true,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    }
-                                }
+                                onExit()
                             }
-                        }
+                        )
                     },
                     onSaveClicked = { saveLocation = true }
                 )
+
 
                 EditableTextBox(
                     label = "Current With",
@@ -311,12 +251,21 @@ fun ModifyItemScreen(
                                 onValueChange = {
                                     searchQuery = it
                                     filteredUsers.clear()
+
+                                    var containsCurrent = false
                                     for (user in registeredUsers.value) {
                                         if (searchQuery == "" ||
                                             user.lowercase().contains(searchQuery.lowercase())) {
                                             filteredUsers.add(user)
+                                            if (user == currentUser) containsCurrent = true
                                         }
                                     }
+
+                                    if (containsCurrent) {
+                                        filteredUsers.remove(currentUser)
+                                        filteredUsers.add(0, currentUser)
+                                    }
+
                                     recompose = (++recompose) % 10
                                 },
                                 label = { Text("Search") },
@@ -397,14 +346,7 @@ fun ModifyItemScreen(
 
                         database.reference.child("qrcodes").child(itemName)
                             .updateChildren(updates)
-                            .addOnSuccessListener {
-                                Toast.makeText(
-                                    navController.context,
-                                    "Item updated successfully",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                navController.navigate("home")
-                            }
+                            .addOnSuccessListener { navController.navigate("home") }
                             .addOnFailureListener {
                                 errorMessage = "Failed to update item: ${it.localizedMessage}"
                             }

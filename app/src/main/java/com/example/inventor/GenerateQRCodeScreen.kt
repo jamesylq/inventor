@@ -6,6 +6,8 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -22,13 +24,17 @@ fun GenerateQRScreen(navController: NavController) {
     val context = LocalContext.current
 
     var inputText by remember { mutableStateOf("") }
+
+    // Location picker state
     var homeLocation by remember { mutableStateOf("") }
+    var selectedLocation by remember { mutableStateOf<String?>(null) }
+    var otherText by remember { mutableStateOf("") }
+
     var qrBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var showQRDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = {
-            MainTopAppBar(navController = navController)
-        }
+        topBar = { MainTopAppBar(navController = navController) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -49,93 +55,131 @@ fun GenerateQRScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
-            // Home Location
-            OutlinedTextField(
-                value = homeLocation,
-                onValueChange = { homeLocation = it },
-                label = { Text("Home Location") },
-                modifier = Modifier.fillMaxWidth()
+            // Home Location (Picker)
+            LocationPickerEditor(
+                itemLocations = itemLocations,
+                selectedLocation = selectedLocation,
+                onSelectedLocationChange = {
+                    selectedLocation = it
+                    if (it != null) homeLocation = it
+                },
+                otherText = otherText,
+                onOtherTextChange = {
+                    otherText = it
+                    if (it.isNotBlank()) homeLocation = it
+                },
+                onSaveRequested = { selected ->
+                    homeLocation = selected ?: otherText
+                }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Button(
-                    onClick = {
-                        if (inputText.isNotBlank()) {
-                            // ===== QR CODE GENERATION (UNCHANGED) =====
-                            val writer = QRCodeWriter()
-                            val bitMatrix = writer.encode(
-                                inputText,
-                                BarcodeFormat.QR_CODE,
-                                512,
-                                512
-                            )
+            // Generate Button
+            Button(
+                onClick = {
+                    if (inputText.isNotBlank() && homeLocation.isNotBlank()) {
+                        // Generate QR bitmap
+                        val writer = QRCodeWriter()
+                        val bitMatrix = writer.encode(
+                            inputText,
+                            BarcodeFormat.QR_CODE,
+                            512,
+                            512
+                        )
 
-                            val bmp = android.graphics.Bitmap.createBitmap(
-                                512,
-                                512,
-                                android.graphics.Bitmap.Config.RGB_565
-                            )
+                        val bmp = android.graphics.Bitmap.createBitmap(
+                            512,
+                            512,
+                            android.graphics.Bitmap.Config.RGB_565
+                        )
 
-                            for (x in 0 until 512) {
-                                for (y in 0 until 512) {
-                                    bmp.setPixel(
-                                        x,
-                                        y,
-                                        if (bitMatrix[x, y])
-                                            android.graphics.Color.BLACK
-                                        else
-                                            android.graphics.Color.WHITE
-                                    )
-                                }
+                        for (x in 0 until 512) {
+                            for (y in 0 until 512) {
+                                bmp.setPixel(
+                                    x,
+                                    y,
+                                    if (bitMatrix[x, y]) android.graphics.Color.BLACK
+                                    else android.graphics.Color.WHITE
+                                )
                             }
-
-                            qrBitmap = bmp
-
-                            // ===== SAVE ITEM TO FIREBASE =====
-                            saveNewItem(
-                                name = inputText,
-                                location = "unknown",
-                                homeLocation = homeLocation.ifBlank { "unknown" },
-                                remarks = "unknown"
-                            )
                         }
+
+                        qrBitmap = bmp
+
+                        // Save item to Firebase
+                        saveNewItem(
+                            name = inputText,
+                            location = homeLocation,
+                            homeLocation = homeLocation,
+                            remarks = "No Remarks Found"
+                        )
+
+                        // Show dialog
+                        showQRDialog = true
                     }
-                ) {
-                    Text("Generate")
-                }
-
-                qrBitmap?.let { bmp ->
-                    Button(
-                        onClick = {
-                            saveBitmapToGallery(context, bmp, "$inputText.png")
-                        }
-                    ) {
-                        Text("Download")
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            qrBitmap?.let { bmp ->
-                Image(
-                    bitmap = bmp.asImageBitmap(),
-                    contentDescription = "Generated QR Code",
-                    modifier = Modifier.size(256.dp)
-                )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = inputText.isNotBlank() && homeLocation.isNotBlank()
+            ) {
+                Text("Generate")
             }
         }
     }
+
+    // =========================
+    // QR Code AlertDialog
+    // =========================
+    if (showQRDialog && qrBitmap != null) {
+        AlertDialog(
+            onDismissRequest = { showQRDialog = false },
+            containerColor = MaterialTheme.colorScheme.background, // match app background
+            title = {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(modifier = Modifier.weight(1.0f))
+                    IconButton(
+                        onClick = {
+                            showQRDialog = false
+                            navController.navigate("home") {
+                                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Close, "Close")
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        saveBitmapToGallery(context, qrBitmap!!, "$inputText.png")
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Download")
+                }
+            },
+            text = {
+                Column(
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                ) {
+                    Image(
+                        bitmap = qrBitmap!!.asImageBitmap(),
+                        contentDescription = "Generated QR Code",
+                        modifier = Modifier.size(256.dp)
+                    )
+                }
+            }
+        )
+    }
 }
 
-
+// =========================
+// Save bitmap to gallery
+// =========================
 fun saveBitmapToGallery(context: android.content.Context, bitmap: android.graphics.Bitmap, filename: String) {
     val resolver = context.contentResolver
     val contentValues = ContentValues().apply {
