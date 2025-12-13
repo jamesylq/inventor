@@ -117,9 +117,9 @@ fun ViewItemScreen(
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
+
                         Spacer(Modifier.height(4.dp))
 
-                        // Location
                         Row {
                             Text(
                                 "Location: ",
@@ -131,12 +131,12 @@ fun ViewItemScreen(
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
+
                         Spacer(Modifier.height(4.dp))
 
-                        // Current With
                         Row {
                             Text(
-                                "Current With: ",
+                                "Last Used By: ",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -145,9 +145,9 @@ fun ViewItemScreen(
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
+
                         Spacer(Modifier.height(4.dp))
 
-                        // Current With
                         Row {
                             Text(
                                 "Home Location: ",
@@ -163,6 +163,7 @@ fun ViewItemScreen(
                 }
 
                 Spacer(modifier = Modifier.height(15.dp))
+
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -176,6 +177,7 @@ fun ViewItemScreen(
                         )
                     }
                 }
+
                 Spacer(modifier = Modifier.height(15.dp))
 
                 ElevatedCard (modifier = Modifier.fillMaxWidth()) {
@@ -208,6 +210,7 @@ fun ViewItemScreen(
                 }
 
                 Spacer(Modifier.height(20.dp))
+
                 Row {
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
@@ -237,7 +240,7 @@ fun ViewItemScreen(
 
             } ?: run {
                 Text(
-                    "Loading item...",
+                    text = "Loading item...",
                     style = MaterialTheme.typography.bodyLarge
                 )
             }

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -67,21 +66,20 @@ fun ItemSearcher(
         .fillMaxSize()
         .padding(16.dp)) {
 
-        // 🔎 Search bar
         OutlinedTextField(
             value = searchText,
             onValueChange = { searchText = it },
-            label = { Text("Search items…") },
+            label = { Text("Search items...") },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(Modifier.height(16.dp))
 
-        // 📋 Scrollable list of items
-        LazyColumn(
+        FadedLazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
         ) {
+            item { Spacer(modifier = Modifier.height(0.dp)) }
             items(filteredItems.size) { index ->
                 val item = filteredItems[index]
 

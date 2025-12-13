@@ -20,11 +20,11 @@ fun saveNewItem(
         .replace("]", "_")
 
     val qrData = QRCodeData(
-        createdBy = username,            // username instead of UID
+        createdBy = username,
         createdTime = System.currentTimeMillis(),
         updateTime = System.currentTimeMillis(),
-        currentWith = username,          // initially assigned to creator
-        status = 0,                      // 0 = available, 1 = checked out, etc.
+        currentWith = username,
+        status = if (location == homeLocation) 1 else 0,
         name = name,
         location = location,
         homeLocation = homeLocation,

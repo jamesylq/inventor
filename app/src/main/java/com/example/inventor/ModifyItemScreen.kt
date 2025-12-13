@@ -63,7 +63,8 @@ fun ModifyItemScreen(
                 snapshot.getValue(QRCodeData::class.java)?.let { data ->
                     location = data.location
                     homeLocation = data.homeLocation
-                    currentWith = data.currentWith
+                    currentWith = auth.currentUser!!.displayName!!
+//                    currentWith = data.currentWith
                     remarks = data.remarks
                     status = data.status
                 }
@@ -270,7 +271,7 @@ fun ModifyItemScreen(
                 )
 
                 EditableTextBox(
-                    label = "Current With",
+                    label = "Last Used By",
                     textValue = currentWith,
                     onValueChange = { currentWith = it },
                     onSaveClicked = { currentWithConfirmation = true },
@@ -323,7 +324,7 @@ fun ModifyItemScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Current With",
+                                    text = "Last Used By",
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -361,7 +362,20 @@ fun ModifyItemScreen(
                                 label = { Text("Search") },
                                 modifier = Modifier.fillMaxWidth()
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(25.dp))
+//                            Button(
+//                                modifier = Modifier.fillMaxWidth(),
+//                                onClick = {
+//
+//                                },
+//                                colors = ButtonDefaults.buttonColors(
+//                                    containerColor = MaterialTheme.colorScheme.surface,
+//                                    contentColor = MaterialTheme.colorScheme.onSurface
+//                                )
+//                            ) {
+//                                Text("This Item is not with anyone.")
+//                            }
+//                            Spacer(modifier = Modifier.height(25.dp))
                             Text(
                                 text = "Select Person Below:",
                                 style = MaterialTheme.typography.bodySmall,
