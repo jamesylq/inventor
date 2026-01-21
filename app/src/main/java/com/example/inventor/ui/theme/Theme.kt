@@ -1,23 +1,23 @@
 package com.example.inventor.ui.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+//private val DarkColorScheme = darkColorScheme(
+//    primary = Purple80,
+//    secondary = PurpleGrey80,
+//    tertiary = Pink80
+//)
 
 val LightColors = lightColorScheme(
     primary = Color(0xFFDCA75B),
     onPrimary = Color(0xFF6B4023),
     primaryContainer = Color(0xFFF0DEB8),
     onPrimaryContainer = Color(0xFFA45E0A),
+    surfaceVariant = Color(0xFFDED9D9),
+    onSurfaceVariant = Color(0xFF504844),
 //    secondary = Color(0xFF625B71),
 //    onSecondary = Color(0xFFFFFFFF),
     background = Color(0xFFFFFBFE),

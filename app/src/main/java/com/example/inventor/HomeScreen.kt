@@ -1,6 +1,5 @@
 package com.example.inventor
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -14,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
-data class HomeCardItem(val title: String, val onClick: () -> Unit)
+data class HomeCardItem(val title: String, val enabled: Boolean = true, val onClick: () -> Unit)
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -29,7 +28,7 @@ fun HomeScreen(navController: NavController) {
         HomeCardItem("New Item") {
             navController.navigate("generateqr")
         },
-        HomeCardItem("Feature 4") {
+        HomeCardItem("Coming Soon", enabled = false) {
             /* handle click */
         }
     )
@@ -64,9 +63,16 @@ fun HomeScreen(navController: NavController) {
                     ElevatedCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(1f) // Make cards square
-                            .clickable { card.onClick() },
-                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
+                            .aspectRatio(1f),
+                        onClick = card.onClick,
+                        enabled = card.enabled,
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp),
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,

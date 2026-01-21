@@ -64,7 +64,6 @@ fun ModifyItemScreen(
                     location = data.location
                     homeLocation = data.homeLocation
                     currentWith = auth.currentUser!!.displayName!!
-//                    currentWith = data.currentWith
                     remarks = data.remarks
                     status = data.status
                 }
@@ -142,6 +141,12 @@ fun ModifyItemScreen(
                         database.reference.child("qrcodes").child(itemName)
                             .removeValue()
                             .addOnSuccessListener {
+                                logItemUpdate(
+                                    itemName = itemName,
+                                    action = Constants.ITEM_DELETION,
+                                    details = "Deleted by $currentUser."
+                                )
+
                                 navController.navigate(prevDestination) {
                                     popUpTo(navController.graph.startDestinationId) {
                                         inclusive = true
@@ -452,10 +457,19 @@ fun ModifyItemScreen(
 
                         database.reference.child("qrcodes").child(itemName)
                             .updateChildren(updates)
-                            .addOnSuccessListener { navController.navigate("home") }
+                            .addOnSuccessListener {
+                                logItemUpdate(
+                                    itemName = itemName,
+                                    action = Constants.ITEM_EDIT,
+                                    details = "Edited by $currentUser. Location: $location,  Home Location: $homeLocation, Last Used By: $currentWith, Remarks: $remarks"
+                                )
+
+                                navController.navigate("home")
+                            }
                             .addOnFailureListener {
                                 errorMessage = "Failed to update item: ${it.localizedMessage}"
                             }
+
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {

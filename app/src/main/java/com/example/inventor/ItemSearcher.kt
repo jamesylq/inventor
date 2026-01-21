@@ -17,6 +17,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,6 +56,10 @@ fun ItemSearcher(
                 Log.e("InventorCore", "Failed to read items: ${error.message}")
             }
         })
+    }
+
+    SideEffect {
+        validateAndCleanLogs()
     }
 
     // Filter by search
@@ -144,6 +149,7 @@ fun ItemSearcher(
                     }
                 }
             }
+            item { Spacer(modifier = Modifier.height(50.dp)) }
         }
     }
 }
